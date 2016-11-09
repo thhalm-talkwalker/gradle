@@ -21,7 +21,9 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.internal.artifacts.DependencyResolutionServices
 import org.gradle.initialization.GradleLauncherFactory
+import org.gradle.integtests.fixtures.executer.BuildServerGradleDistribution
 import org.gradle.integtests.fixtures.executer.GradleContextualExecuter
+import org.gradle.integtests.fixtures.executer.GradleDistribution
 import org.gradle.integtests.fixtures.executer.IntegrationTestBuildContext
 import org.gradle.internal.concurrent.CompositeStoppable
 import org.gradle.internal.concurrent.Stoppable
@@ -58,22 +60,34 @@ class ToolingApiDistributionResolver {
         withRepository("https://repo.gradle.org/gradle/repo")
     }
 
-    ToolingApiDistribution resolve(String toolingApiVersion) {
+    ToolingApiDistribution resolve(String version) {
+        resolve(buildContext.distribution(version))
+    }
+
+    ToolingApiDistribution resolve(GradleDistribution gradleDistribution) {
+        String toolingApiVersion = gradleDistribution.version.version
         if (!distributions[toolingApiVersion]) {
-            if (useToolingApiFromTestClasspath(toolingApiVersion)) {
-                distributions[toolingApiVersion] = new TestClasspathToolingApiDistribution()
-            } else {
-                Dependency toolingApiDep = resolutionServices.dependencyHandler.create("org.gradle:gradle-tooling-api:$toolingApiVersion")
-                Configuration toolingApiConfig = resolutionServices.configurationContainer.detachedConfiguration(toolingApiDep)
-                distributions[toolingApiVersion] = new ExternalToolingApiDistribution(toolingApiVersion, toolingApiConfig.files)
-            }
+            distributions[toolingApiVersion] = createToolingApiDistribution(gradleDistribution)
         }
         distributions[toolingApiVersion]
     }
 
-    private boolean useToolingApiFromTestClasspath(String toolingApiVersion) {
+    private ToolingApiDistribution createToolingApiDistribution(GradleDistribution gradleDistribution) {
+        if (useToolingApiFromTestClasspath(gradleDistribution)) {
+            new TestClasspathToolingApiDistribution()
+        } else if (gradleDistribution instanceof BuildServerGradleDistribution) {
+            new GradleInstallationToolingApiDistribution(gradleDistribution)
+        } else {
+            String toolingApiVersion = gradleDistribution.version.version
+            Dependency toolingApiDep = resolutionServices.dependencyHandler.create("org.gradle:gradle-tooling-api:$toolingApiVersion")
+            Configuration toolingApiConfig = resolutionServices.configurationContainer.detachedConfiguration(toolingApiDep)
+            new ExternalToolingApiDistribution(toolingApiVersion, toolingApiConfig.files)
+        }
+    }
+
+    private boolean useToolingApiFromTestClasspath(GradleDistribution gradleDistribution) {
         !useExternalToolingApiDistribution &&
-        toolingApiVersion == buildContext.version.version &&
+                gradleDistribution.version.version == buildContext.version.version &&
                 GradleContextualExecuter.embedded
     }
 

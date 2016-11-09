@@ -16,7 +16,7 @@
 
 package org.gradle.integtests.tooling.fixture
 
-import org.gradle.internal.classloader.DefaultClassLoaderFactory
+import org.gradle.internal.classloader.VisitableURLClassLoader
 import org.gradle.internal.classpath.DefaultClassPath
 import org.gradle.util.GradleVersion
 
@@ -37,8 +37,8 @@ class ExternalToolingApiDistribution implements ToolingApiDistribution {
         classpath
     }
 
-    ClassLoader getClassLoader() {
-        return new DefaultClassLoaderFactory().createIsolatedClassLoader(new DefaultClassPath(classpath))
+    ClassLoader createClassLoader(ClassLoader parent) {
+        return new VisitableURLClassLoader(parent, new DefaultClassPath(classpath))
     }
 
     String toString() {

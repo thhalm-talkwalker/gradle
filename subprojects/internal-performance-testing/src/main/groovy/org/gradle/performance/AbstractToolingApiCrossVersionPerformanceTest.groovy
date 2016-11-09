@@ -164,8 +164,8 @@ abstract class AbstractToolingApiCrossVersionPerformanceTest extends Specificati
                 List<String> baselines = CrossVersionPerformanceTestRunner.toBaselineVersions(RELEASES, experimentSpec.targetVersions).toList()
                 [*baselines, 'current'].each { String version ->
                     GradleDistribution dist = 'current' == version ? CURRENT : buildContext.distribution(version)
-                    def toolingApiDistribution = resolver.resolve(dist.version.version)
-                    doMeasurement(dist, toolingApiDistribution, projectDir, results, version)
+                    def toolingApiDistribution = resolver.resolve(dist)
+                    doMeasurement(dist, toolingApiDistribution, projectDir, results, 'current' == version ? version : dist.version.version)
                 }
             } finally {
                 resolver.stop()
