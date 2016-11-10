@@ -111,6 +111,11 @@ class GradleExecuterBackedSession implements GradleSession {
             executer.requireDaemon()
         }
 
+        if (executer.isUseDaemon()) {
+            // specify JVM options for daemon client (launcher)
+            executer.withCommandLineGradleOpts(PerformanceTestJvmOptions.createDaemonClientJvmOptions())
+        }
+
         // must make a copy of argument for executer to use for stopping since arguments must match when stopping the daemons
         // executer instance's reset method gets called after execution and the arguments aren't preserved there
         if (executerForStopping == null) {
