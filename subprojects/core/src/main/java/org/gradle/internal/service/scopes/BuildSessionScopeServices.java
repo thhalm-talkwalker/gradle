@@ -35,6 +35,7 @@ import org.gradle.deployment.internal.DeploymentRegistry;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.id.LongIdGenerator;
 import org.gradle.internal.jvm.inspection.JvmVersionDetector;
+import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.remote.MessagingServer;
 import org.gradle.internal.service.DefaultServiceRegistry;
 import org.gradle.internal.service.ServiceRegistration;
@@ -85,7 +86,9 @@ public class BuildSessionScopeServices extends DefaultServiceRegistry {
             startParameter.getGradleUserHomeDir(),
             temporaryFileProvider,
             execHandleFactory,
-            jvmVersionDetector);
+            jvmVersionDetector,
+            get(OutputEventListener.class)
+            );
     }
 
     ClassPathRegistry createClassPathRegistry() {
