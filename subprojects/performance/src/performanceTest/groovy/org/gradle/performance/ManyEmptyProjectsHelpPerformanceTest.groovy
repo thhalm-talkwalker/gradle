@@ -28,6 +28,7 @@ class ManyEmptyProjectsHelpPerformanceTest extends AbstractCrossVersionPerforman
         runner.testProject = "bigEmpty"
         runner.tasksToRun = ['help']
         runner.targetVersions = ['3.0', 'last']
+        runner.gradleOpts = ['-Xmx1g']
 
         when:
         def result = runner.run()

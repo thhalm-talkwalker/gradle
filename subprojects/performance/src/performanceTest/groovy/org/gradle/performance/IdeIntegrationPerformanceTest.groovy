@@ -30,6 +30,7 @@ class IdeIntegrationPerformanceTest extends AbstractCrossVersionPerformanceTest 
         runner.tasksToRun = ['eclipse']
         runner.targetVersions = targetVersions
         runner.useDaemon = true
+        runner.gradleOpts = ['-Xmx1g']
 
         when:
         def result = runner.run()
@@ -52,6 +53,7 @@ class IdeIntegrationPerformanceTest extends AbstractCrossVersionPerformanceTest 
         runner.tasksToRun = ['idea']
         runner.targetVersions = targetVersions
         runner.useDaemon = true
+        runner.gradleOpts = ['-Xmx1g']
 
         when:
         def result = runner.run()
