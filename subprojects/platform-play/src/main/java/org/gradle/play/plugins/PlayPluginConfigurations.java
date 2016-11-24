@@ -18,6 +18,7 @@ package org.gradle.play.plugins;
 
 import com.google.common.collect.ImmutableSet;
 import org.gradle.api.Incubating;
+import org.gradle.api.Project;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -28,6 +29,7 @@ import org.gradle.api.internal.file.collections.SimpleFileCollection;
 import org.gradle.api.internal.tasks.TaskDependencyResolveContext;
 
 import java.io.File;
+import java.util.Set;
 
 /**
  * Conventional locations and names for play plugins.
@@ -93,12 +95,12 @@ public class PlayPluginConfigurations {
             return getConfiguration();
         }
 
-        FileCollection getChangingArtifacts() {
-            return new FilterByProjectComponentTypeFileCollection(getConfiguration(), true);
+        FileCollection getChangingArtifacts(Set<Project> nonChangingProjects) {
+            return new FilterByProjectComponentTypeFileCollection(getConfiguration(), nonChangingProjects, true);
         }
 
-        FileCollection getNonChangingArtifacts() {
-            return new FilterByProjectComponentTypeFileCollection(getConfiguration(), false);
+        FileCollection getNonChangingArtifacts(Set<Project> nonChangingProjects) {
+           return new FilterByProjectComponentTypeFileCollection(getConfiguration(), nonChangingProjects, false);
         }
 
         void addDependency(Object notation) {
@@ -113,9 +115,11 @@ public class PlayPluginConfigurations {
     private static class FilterByProjectComponentTypeFileCollection extends LazilyInitializedFileCollection {
         private final Configuration configuration;
         private final boolean matchProjectComponents;
+        private final Set<Project> nonChangingProjects;
 
-        private FilterByProjectComponentTypeFileCollection(Configuration configuration, boolean matchProjectComponents) {
+        private FilterByProjectComponentTypeFileCollection(Configuration configuration, Set<Project> nonChangingProjects, boolean matchProjectComponents) {
             this.configuration = configuration;
+            this.nonChangingProjects = nonChangingProjects;
             this.matchProjectComponents = matchProjectComponents;
         }
 
@@ -128,7 +132,20 @@ public class PlayPluginConfigurations {
         public FileCollectionInternal createDelegate() {
             ImmutableSet.Builder<File> files = ImmutableSet.builder();
             for (ResolvedArtifact artifact : configuration.getResolvedConfiguration().getResolvedArtifacts()) {
-                if ((artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) == matchProjectComponents) {
+                if (artifact.getId().getComponentIdentifier() instanceof ProjectComponentIdentifier) {
+                    ProjectComponentIdentifier projectComponentIdentifier = (ProjectComponentIdentifier) artifact.getId().getComponentIdentifier();
+                    boolean add = matchProjectComponents;
+                    //handle projects marked as "nonChanging"
+                    for (Project project : nonChangingProjects) {
+                        if (projectComponentIdentifier.getProjectPath().equals(project.getPath())) {
+                            add = !matchProjectComponents;
+                            break;
+                        }
+                    }
+                    if (add) {
+                        files.add(artifact.getFile());
+                    }
+                } else if (!matchProjectComponents) {
                     files.add(artifact.getFile());
                 }
             }

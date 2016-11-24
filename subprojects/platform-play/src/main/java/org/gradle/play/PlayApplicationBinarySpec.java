@@ -78,4 +78,7 @@ public interface PlayApplicationBinarySpec extends ApplicationBinarySpec {
     Map<LanguageSourceSet, ScalaLanguageSourceSet> getGeneratedScala();
 
     Map<LanguageSourceSet, JavaScriptSourceSet> getGeneratedJavaScript();
+
+    NonChangingProjects getNonChangingProjects();
+
 }

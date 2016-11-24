@@ -19,6 +19,7 @@ package org.gradle.play.internal;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.gradle.api.Nullable;
+import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.AbstractBuildableComponentSpec;
@@ -37,6 +38,7 @@ import org.gradle.platform.base.binary.BaseBinarySpec;
 import org.gradle.platform.base.internal.BinaryBuildAbility;
 import org.gradle.platform.base.internal.ComponentSpecIdentifier;
 import org.gradle.platform.base.internal.ToolSearchBuildAbility;
+import org.gradle.play.NonChangingProjects;
 import org.gradle.play.JvmClasses;
 import org.gradle.play.PlayApplicationSpec;
 import org.gradle.play.PublicAssets;
@@ -52,6 +54,7 @@ import static org.gradle.util.CollectionUtils.single;
 public class DefaultPlayApplicationBinarySpec extends BaseBinarySpec  implements PlayApplicationBinarySpecInternal {
     private final DefaultScalaJvmAssembly jvmAssembly = new DefaultScalaJvmAssembly(getIdentifier().child("assembly"));
     private final PublicAssets assets = new DefaultPublicAssets(getIdentifier().child("publicAssets"));
+    private final NonChangingProjects nonChangingProjects = new DefaultNonChangingProjects();
     private Map<LanguageSourceSet, ScalaLanguageSourceSet> generatedScala = Maps.newHashMap();
     private Map<LanguageSourceSet, JavaScriptSourceSet> generatedJavaScript = Maps.newHashMap();
     private PlayPlatform platform;
@@ -125,6 +128,10 @@ public class DefaultPlayApplicationBinarySpec extends BaseBinarySpec  implements
     @Override
     public PublicAssets getAssets() {
         return assets;
+    }
+
+    public NonChangingProjects getNonChangingProjects() {
+        return nonChangingProjects;
     }
 
     @Override
@@ -259,6 +266,19 @@ public class DefaultPlayApplicationBinarySpec extends BaseBinarySpec  implements
         @Override
         public void addAssetDir(File assetDir) {
             resourceDirs.add(assetDir);
+        }
+    }
+
+    private static class DefaultNonChangingProjects implements NonChangingProjects {
+        private Set<Project> nonChangingProjects = Sets.newHashSet();
+
+        public Set<Project> getAll() {
+            return nonChangingProjects;
+        }
+
+        @Override
+        public void addProject(Project project) {
+            nonChangingProjects.add(project);
         }
     }
 }
